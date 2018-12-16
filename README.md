@@ -30,7 +30,7 @@ Available OpenCL devices and their numbers are displayed if you execute the prog
 This is a program for converting edges in the image to polyline. The result is written to output.png.
 
 ```
-Usage : ./rect <image file name> [device number]
+Usage : ./poly <image file name> [device number]
 ```
 
 
