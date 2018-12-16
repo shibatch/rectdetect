@@ -41,7 +41,7 @@ typedef struct LS_t { // 56 bytes
 typedef struct LSX_t { // 56 bytes
   int64_t mx00, mx01, mx11, my0, my1;
   short2 dirSE, vDirSE;
-  int distSquSE, mutex;
+  int distSquSE, padding;
 } LSX_t;
 
 float distanceSqu(float vx, float vy, float wx, float wy) {
@@ -696,10 +696,21 @@ __kernel void refine_pass0(global LSX_t *lsxListOut, global LS_t *lsListIn) {
   lsxListOut[g].my0         = 0;
   lsxListOut[g].my1         = 0;
   lsxListOut[g].distSquSE   = lsxListOut[g].dirSE.x * lsxListOut[g].dirSE.x + lsxListOut[g].dirSE.y * lsxListOut[g].dirSE.y;
-  lsxListOut[g].mutex       = -1;
+  lsxListOut[g].padding     = 0;
 }
 
 int doti2(int2 x, int2 y) { return x.x * y.x + x.y * y.y; }
+
+#ifndef ENABLE_ATOMICS64
+void xatom_add(volatile __global long *p, long val) {
+  uint32_t l = val & (long)0xffffffff;
+  int32_t h = val >> 32;
+
+  uint32_t o = atomic_add((volatile __global unsigned int *)p, l);
+  if (o + l < o) h++;
+  atomic_add(1 + (volatile __global int *)p, h);
+}
+#endif
 
 __kernel void refine_pass1(global LSX_t *lsxListIO, global LS_t *lsListIn, global int *lsIdIn, int iw, int ih) {
   const int x = get_global_id(0), y = get_global_id(1);
@@ -730,14 +741,11 @@ __kernel void refine_pass1(global LSX_t *lsxListIO, global LS_t *lsListIn, globa
   atom_add(&(lsxListIO[g].my0 ), convert_long_rte((float)ax0 * ay ));
   atom_add(&(lsxListIO[g].my1 ), convert_long_rte((float)ax1 * ay ));
 #else
-  volatile global int *mutex = &(lsxListIO[g].mutex);
-  while(atomic_cmpxchg(mutex, -1, p0) != -1) ;
-  lsxListIO[g].mx00 += convert_long_rte((float)ax0 * ax0);
-  lsxListIO[g].mx01 += convert_long_rte((float)ax0 * ax1);
-  lsxListIO[g].mx11 += convert_long_rte((float)ax1 * ax1);
-  lsxListIO[g].my0  += convert_long_rte((float)ax0 * ay );
-  lsxListIO[g].my1  += convert_long_rte((float)ax1 * ay );
-  *mutex = -1;
+  xatom_add(&(lsxListIO[g].mx00), convert_long_rte((float)ax0 * ax0));
+  xatom_add(&(lsxListIO[g].mx01), convert_long_rte((float)ax0 * ax1));
+  xatom_add(&(lsxListIO[g].mx11), convert_long_rte((float)ax1 * ax1));
+  xatom_add(&(lsxListIO[g].my0 ), convert_long_rte((float)ax0 * ay ));
+  xatom_add(&(lsxListIO[g].my1 ), convert_long_rte((float)ax1 * ay ));
 #endif
 }
 
