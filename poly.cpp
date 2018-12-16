@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
   oclimgutil_filterStrength(oclimgutil, mem3, mem4, 500, iw, ih, queue, NULL); // label, str
   oclimgutil_threshold_i_i(oclimgutil, mem3, mem3, 0, 0, 1, iw * ih, queue, NULL);
 
-  oclpolyline_execute(oclpolyline, memLS, iw*ih*4*4, mem0, mem3, memBig, mem4, mem5, mem6, mem7, mem8, mem9, 0.8, 20, iw, ih, queue, NULL);
+  oclpolyline_execute(oclpolyline, memLS, iw*ih*4*4, mem0, mem3, memBig, mem4, mem5, mem6, mem7, mem8, mem9, 1, 20, iw, ih, queue, NULL);
 
   //
 
