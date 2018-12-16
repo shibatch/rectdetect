@@ -638,6 +638,26 @@ __kernel void iirblur_f_f_pass3(global float *obuf, global float *tmp0, global f
 
 //
 
+__kernel void calcStrength(global int *out, global float *edge, global int *label, int iw, int ih) {
+  const int x = get_global_id(0), y = get_global_id(1);
+  if (x <= 0 || y <= 0 || x >= (iw-1) || y >= (ih-1)) return;
+  const int p0 = y * iw + x;
+
+  if (label[p0] <= 0) return;
+
+  atomic_add(&out[label[p0]], (int)(edge[p0] * edge[p0] * 10000.0f));
+}
+
+__kernel void filterStrength(global int *labelinout, global int *str, int thre, int iw, int ih) {
+  const int x = get_global_id(0), y = get_global_id(1);
+  if (x <= 0 || y <= 0 || x >= (iw-1) || y >= (ih-1)) return;
+  const int p0 = y * iw + x;
+
+  if (labelinout[p0] <= 0 || str[labelinout[p0]] < thre) labelinout[p0] = -1;
+}
+
+//
+
 __constant unsigned short s2l[] = {
   0,9,19,29,39,49,59,69,
   79,89,99,109,120,131,143,156,

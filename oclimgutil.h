@@ -65,6 +65,10 @@ typedef struct oclimgutil_t {
   int kid_iirblur_f_f_pass1;
   cl_kernel kernel_iirblur_f_f_pass3;
   int kid_iirblur_f_f_pass3;
+  cl_kernel kernel_calcStrength;
+  int kid_calcStrength;
+  cl_kernel kernel_filterStrength;
+  int kid_filterStrength;
 } oclimgutil_t;
 
 oclimgutil_t *init_oclimgutil(cl_device_id device, cl_context context);
@@ -92,6 +96,8 @@ cl_event oclimgutil_unpack_f_f_f_plab(oclimgutil_t *thiz, cl_mem out0, cl_mem ou
 cl_event oclimgutil_pack_plab_f_f_f(oclimgutil_t *thiz, cl_mem out, cl_mem in0, cl_mem in1, cl_mem in2, int iw, int ih, cl_command_queue queue, const cl_event *events);
 cl_event oclimgutil_edgevec_f2_plab(oclimgutil_t *thiz, cl_mem out, cl_mem in, int iw, int ih, cl_command_queue queue, const cl_event *events);
 cl_event oclimgutil_edge_f_plab(oclimgutil_t *thiz, cl_mem out, cl_mem in, int iw, int ih, cl_command_queue queue, const cl_event *events);
+cl_event oclimgutil_calcStrength(oclimgutil_t *thiz, cl_mem out, cl_mem edge, cl_mem label, int iw, int ih, cl_command_queue queue, const cl_event *events);
+cl_event oclimgutil_filterStrength(oclimgutil_t *thiz, cl_mem labelinout, cl_mem str, int thre, int iw, int ih, cl_command_queue queue, const cl_event *events);
 
 #if defined(__cplusplus)
 }

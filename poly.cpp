@@ -112,10 +112,15 @@ int main(int argc, char **argv) {
   oclimgutil_edge_f_plab(oclimgutil, mem5, mem4, iw, ih, queue, NULL);
   oclimgutil_thinthres_f_f_f2(oclimgutil, mem2, mem5, memBig, iw, ih, queue, NULL);
 
-  oclimgutil_threshold_f_f(oclimgutil, mem3, mem2, 0.0, 0.0, 1.0, iw * ih, queue, NULL);
-  oclimgutil_cast_i_f(oclimgutil, mem2, mem3, 1, iw * ih, queue, NULL);
+  oclimgutil_threshold_f_f(oclimgutil, mem9, mem2, 0.0, 0.0, 1.0, iw * ih, queue, NULL);
+  oclimgutil_cast_i_f(oclimgutil, mem8, mem9, 1, iw * ih, queue, NULL);
+  oclimgutil_label8x_int_int(oclimgutil, mem3, mem8, mem9, 0, iw, ih, queue, NULL); // out, in, tmp
+  oclimgutil_clear(oclimgutil, mem4, iw*ih*4, queue, NULL);
+  oclimgutil_calcStrength(oclimgutil, mem4, mem2, mem3, iw, ih, queue, NULL); // out, edge, label
+  oclimgutil_filterStrength(oclimgutil, mem3, mem4, 500, iw, ih, queue, NULL); // label, str
+  oclimgutil_threshold_i_i(oclimgutil, mem3, mem3, 0, 0, 1, iw * ih, queue, NULL);
 
-  oclpolyline_execute(oclpolyline, memLS, iw*ih*4*4, mem0, mem2, memBig, mem4, mem5, mem6, mem7, mem8, mem9, 0.8, 20, iw, ih, queue, NULL);
+  oclpolyline_execute(oclpolyline, memLS, iw*ih*4*4, mem0, mem3, memBig, mem4, mem5, mem6, mem7, mem8, mem9, 0.8, 20, iw, ih, queue, NULL);
 
   //
 
@@ -127,23 +132,25 @@ int main(int argc, char **argv) {
 
   //
 
+  //memcpy(data, buf0, ws*ih);
   memset(data, 0, ws * ih);
 
   int n = bufLS[0];
 
+  linesegment_t *ls = ((linesegment_t *)bufLS);
+
   for(int i=1;i<=n;i++) { // >>>> This starts from 1 <<<<
-    linesegment_t *ls = &((linesegment_t *)bufLS)[i];
+    if (ls[i].polyid == 0) continue;
+    if (ls[i].leftPtr > 0) continue;
+
+    int cnt = 0;
+    for(int j=i;j > 0;j = ls[j].rightPtr, cnt++) {
 #ifdef _MSC_VER
-    if (ls->x0 < 0 || ls->x0 >= iw || ls->x1 < 0 || ls->x1 >= iw ||
-	ls->y0 < 0 || ls->y0 >= ih || ls->y1 < 0 || ls->y1 >= ih) continue;
+      if (ls[j].x0 < 0 || ls[j].x0 >= iw || ls[j].x1 < 0 || ls[j].x1 >= iw ||
+	  ls[j].y0 < 0 || ls[j].y0 >= ih || ls[j].y1 < 0 || ls[j].y1 >= ih) continue;
 #endif
-    line(img, cvPoint(ls->x0, ls->y0), cvPoint(ls->x1, ls->y1), Scalar(100, 255, 100), 1, 8, 0);
-    data[ws * (int)ls->y0 + 3 * (int)ls->x0 + 0] = 0;
-    data[ws * (int)ls->y0 + 3 * (int)ls->x0 + 1] = 0;
-    data[ws * (int)ls->y0 + 3 * (int)ls->x0 + 2] = 255;
-    data[ws * (int)ls->y1 + 3 * (int)ls->x1 + 0] = 0;
-    data[ws * (int)ls->y1 + 3 * (int)ls->x1 + 1] = 0;
-    data[ws * (int)ls->y1 + 3 * (int)ls->x1 + 2] = 255;
+      line(img, cvPoint(ls[j].x0, ls[j].y0), cvPoint(ls[j].x1, ls[j].y1), (cnt & 1) ? Scalar(100, 100, 255) : Scalar(255, 255, 100), 1, 8, 0);
+    }
   }
 
   imwrite("output.png", img);

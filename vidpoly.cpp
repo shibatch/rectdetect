@@ -171,10 +171,15 @@ int main(int argc, char **argv) {
     oclimgutil_edge_f_plab(oclimgutil, mem5, mem4, iw, ih, queue, NULL);
     oclimgutil_thinthres_f_f_f2(oclimgutil, mem2, mem5, memBig, iw, ih, queue, NULL);
 
-    oclimgutil_threshold_f_f(oclimgutil, mem3, mem2, 0.0, 0.0, 1.0, iw * ih, queue, NULL);
-    oclimgutil_cast_i_f(oclimgutil, mem2, mem3, 1, iw * ih, queue, NULL);
+    oclimgutil_threshold_f_f(oclimgutil, mem9, mem2, 0.0, 0.0, 1.0, iw * ih, queue, NULL);
+    oclimgutil_cast_i_f(oclimgutil, mem8, mem9, 1, iw * ih, queue, NULL);
+    oclimgutil_label8x_int_int(oclimgutil, mem3, mem8, mem9, 0, iw, ih, queue, NULL); // out, in, tmp
+    oclimgutil_clear(oclimgutil, mem4, iw*ih*4, queue, NULL);
+    oclimgutil_calcStrength(oclimgutil, mem4, mem2, mem3, iw, ih, queue, NULL); // out, edge, label
+    oclimgutil_filterStrength(oclimgutil, mem3, mem4, 2000, iw, ih, queue, NULL); // label, str
+    oclimgutil_threshold_i_i(oclimgutil, mem3, mem3, 0, 0, 1, iw * ih, queue, NULL);
 
-    oclpolyline_execute(oclpolyline, memLS, iw*ih*4*4, mem0, mem2, memBig, mem4, mem5, mem6, mem7, mem8, mem9, 0.8, 20, iw, ih, queue, NULL);
+    oclpolyline_execute(oclpolyline, memLS, iw*ih*4*4, mem0, mem3, memBig, mem4, mem5, mem6, mem7, mem8, mem9, 0.8, 10, iw, ih, queue, NULL);
 
     //
 

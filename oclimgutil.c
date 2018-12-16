@@ -87,6 +87,10 @@ oclimgutil_t *init_oclimgutil(cl_device_id device, cl_context context) {
   thiz->kid_iirblur_f_f_pass1 = getNextKernelID();
   thiz->kernel_iirblur_f_f_pass3 = clCreateKernel(program, "iirblur_f_f_pass3", NULL);
   thiz->kid_iirblur_f_f_pass3 = getNextKernelID();
+  thiz->kernel_calcStrength = clCreateKernel(program, "calcStrength", NULL);
+  thiz->kid_calcStrength = getNextKernelID();
+  thiz->kernel_filterStrength = clCreateKernel(program, "filterStrength", NULL);
+  thiz->kid_filterStrength = getNextKernelID();
 
   ce(clReleaseProgram(program));
 
@@ -125,6 +129,8 @@ void dispose_oclimgutil(oclimgutil_t *thiz) {
   ce(clReleaseKernel(thiz->kernel_iirblur_f_f_pass2b));
   ce(clReleaseKernel(thiz->kernel_iirblur_f_f_pass1));
   ce(clReleaseKernel(thiz->kernel_iirblur_f_f_pass3));
+  ce(clReleaseKernel(thiz->kernel_calcStrength));
+  ce(clReleaseKernel(thiz->kernel_filterStrength));
 
   free(thiz);
 }
@@ -300,4 +306,14 @@ cl_event oclimgutil_edge_f_plab(oclimgutil_t *thiz, cl_mem out, cl_mem in, int i
   assert(thiz->magic == MAGIC);
   simpleSetKernelArg(thiz->kernel_edge_plab, "MMii", out, in, iw, ih);
   return runKernel2Dx(queue, thiz->kernel_edge_plab, thiz->kid_edge_plab, CLEARLS6B(iw), CLEARLS6B(ih), events);
+}
+
+cl_event oclimgutil_calcStrength(oclimgutil_t *thiz, cl_mem out, cl_mem edge, cl_mem label, int iw, int ih, cl_command_queue queue, const cl_event *events) {
+  simpleSetKernelArg(thiz->kernel_calcStrength, "MMMii", out, edge, label, iw, ih);
+  return runKernel2Dx(queue, thiz->kernel_calcStrength, thiz->kid_calcStrength, CLEARLS6B(iw), CLEARLS6B(ih), NULL);
+}
+
+cl_event oclimgutil_filterStrength(oclimgutil_t *thiz, cl_mem labelinout, cl_mem str, int thre, int iw, int ih, cl_command_queue queue, const cl_event *events) {
+  simpleSetKernelArg(thiz->kernel_filterStrength, "MMiii", labelinout, str, thre, iw, ih);
+  return runKernel2Dx(queue, thiz->kernel_filterStrength, thiz->kid_filterStrength, CLEARLS6B(iw), CLEARLS6B(ih), NULL);
 }
