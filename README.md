@@ -2,6 +2,10 @@
 
 This is a demo program for a method for realtime rectangle detection from an image. This program detects ALL rectangular shapes viewed from 3D perspective in real time, utilizing a GPU. The program is purely rule-based.
 
+# Download
+
+Source code and compiled binary can be downloaded from https://github.com/shibatch/rectdetect/releases
+
 # Movies
 
 See the following youtube videos to see some results.
